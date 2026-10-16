@@ -1,0 +1,37 @@
+version: 2
+
+sources:
+  - name: silver
+    description: "Camada Silver padronizada e resolvida do Lakehouse NovaBank"
+    tables:
+      - name: golden_customers
+        description: "Registros mestre (Golden Records) produzidos pelo Entity Resolution"
+      - name: entity_crosswalk
+        description: "Tabela de mapeamento (source, source_record_id) -> master_customer_id"
+      - name: contas
+      - name: transacoes
+      - name: sac_atendimentos
+      - name: nps_respostas
+
+models:
+  - name: mart_customer_360
+    description: "Visão 360º analítica e operacional de clientes únicos do NovaBank"
+    columns:
+      - name: master_customer_id
+        description: "Identificador único global (Golden Record)"
+        tests:
+          - unique
+          - not_null
+      - name: cpf
+        description: "CPF de 11 dígitos ou token pseudonimizado LGPD"
+        tests:
+          - not_null
+      - name: segmento
+        description: "Segmento de relacionamento bancário"
+        tests:
+          - accepted_values:
+              values: ["MASSA", "VAREJO_ALTO", "PRIME", "PRIVATE"]
+      - name: categoria_nps
+        tests:
+          - accepted_values:
+              values: ["PROMOTOR", "NEUTRO", "DETRATOR", "SEM_RESPOSTA"]

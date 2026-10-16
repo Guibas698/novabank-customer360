@@ -1,0 +1,37 @@
+services:
+  customer360-api:
+    build: .
+    container_name: novabank-customer360-api
+    ports:
+      - "8000:8000"
+    environment:
+      - CUSTOMER360_DATA_DIR=/app/data
+    volumes:
+      - customer360_data:/app/data
+    profiles: ["lite", "full"]
+
+  postgres-dw:
+    image: postgres:16-alpine
+    container_name: novabank-customer360-postgres
+    environment:
+      POSTGRES_USER: novabank
+      POSTGRES_PASSWORD: novabank_password
+      POSTGRES_DB: customer360_dw
+    ports:
+      - "5432:5432"
+    profiles: ["full"]
+
+  minio-lakehouse:
+    image: minio/minio:latest
+    container_name: novabank-customer360-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin_password
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    profiles: ["full"]
+
+volumes:
+  customer360_data:
