@@ -1,14 +1,12 @@
-# 🏦 NovaBank Customer 360 Lakehouse & Governance Platform
-
-[![CI - NovaBank Customer 360 Lakehouse](https://github.com/Guibas698/novabank-customer360/actions/workflows/ci.yml/badge.svg)](https://github.com/Guibas698/novabank-customer360/actions)
+# NovaBank Customer 360 Lakehouse & Governance Platform
 
 Plataforma ponta a ponta de **Engenharia de Dados, Governança (LGPD), Entity Resolution e Machine Learning** construída para o banco digital fictício **NovaBank**.
 
-O projeto resolve um dos problemas mais reais de grandes instituições financeiras: **unificar cadastros fragmentados e sujos de 5 sistemas distintos** em um **Golden Record (Visão 360º do Cliente)** auditável, com histórico **SCD Tipo 2**, **Direito ao Esquecimento automatizado (Art. 18 da LGPD)** e **modelo preditivo de Churn**.
+O projeto resolve um problema central de grandes instituições financeiras: **unificar cadastros fragmentados e inconsistentes de 5 sistemas distintos** em um **Golden Record (Visão 360 do Cliente)** auditável, com histórico **SCD Tipo 2**, **Direito ao Esquecimento automatizado (Art. 18 da LGPD)** e **modelo preditivo de Churn**.
 
 ---
 
-## 🏗️ Arquitetura Medallion (Bronze → Silver → Gold)
+## Arquitetura Medallion (Bronze -> Silver -> Gold)
 
 ```mermaid
 flowchart LR
@@ -52,21 +50,21 @@ flowchart LR
 
 ---
 
-## ✨ Destaques Técnicos (Foco na Vaga de Dados)
+## Destaques Técnicos
 
 | Frente | Implementação no Projeto |
 |---|---|
 | **Ingestão Multi-Fonte & Watermark** | Carga incremental por watermark (`updated_at`, `data_hora`), detecção automática de encoding (`UTF-8` vs `ISO-8859-1` / `latin-1`) e captura de JSON truncado em `_corrupt_record` (`src/customer360/ingestion/bronze.py`). |
 | **Qualidade de Dados & Quarentena** | Motor declarativo de expectativas (`src/customer360/quality/expectations.py`) que valida CPFs pelo dígito verificador módulo 11, domínios e faixas numéricas, isolando falhas críticas em `quarantine/` sem descartar dados em silêncio. |
 | **Padronização & SCD Tipo 2** | Normalização de 6 formatos de datas legadas, recuperação de zeros à esquerda em CPFs e construção de histórico **Slowly Changing Dimension Tipo 2** (`effective_from`, `effective_to`, `is_current`, `version_num`) em Python e PySpark (`spark_jobs/bronze_to_silver_spark.py`). |
-| **Entity Resolution (Scala Spark + Python)** | Algoritmo de *Multi-Pass Blocking* + similaridade **Jaro-Winkler** e **Levenshtein** + *Union-Find* com restrição *Cannot-Link* por CPF distinto. Avaliado cientificamente contra o gabarito (*Ground Truth*) com **BCubed F1-Score > 95%** (`scala/entity-resolution/` e `src/customer360/entity_resolution/matcher.py`). |
+| **Entity Resolution (Scala Spark + Python)** | Algoritmo de *Multi-Pass Blocking* + similaridade **Jaro-Winkler** e **Levenshtein** + *Union-Find* com restrição *Cannot-Link* por CPF distinto. Avaliado contra o gabarito (*Ground Truth*) com **BCubed F1-Score > 90%** (`scala/entity-resolution/` e `src/customer360/entity_resolution/matcher.py`). |
 | **Governança & Motor LGPD** | Scanner automático de PII, pseudonimização criptográfica **HMAC-SHA256**, mascaramento dinâmico por perfil (**RBAC**: `ANALISTA`, `ATENDENTE`, `DPO`) e pipeline de **Direito ao Esquecimento** que expurga/anonimiza em Bronze, Silver e Gold emitindo certificado assinado com SHA-256 (`src/customer360/governance/lgpd.py`). |
 | **SQL / dbt & KPIs Executivos** | Modelos dimensionais no `dbt_customer360/`, análise de sentimento em português sobre comentários livres do NPS, modelo de propensão a **Churn** com explicabilidade (XAI) e KPIs corporativos (NPS, Churn, CLV, TPV, FCR, TMA e Cross-Sell). |
 | **Orquestração Airflow** | DAGs prontas em `airflow/dags/` para o pipeline diário Medallion (com verificação de SLA e alerta de F1-Score) e para expurgo LGPD sob demanda. |
 
 ---
 
-## 🚀 Como Executar Localmente
+## Como Executar Localmente
 
 ### 1. Instalar e rodar a suíte de testes E2E
 ```bash
@@ -88,16 +86,16 @@ PYTHONPATH=src uvicorn customer360.api.app:app --reload --port 8000
 ```
 - **Dashboard Executivo**: `http://localhost:8000/dashboard`
 - **Documentação Interativa (Swagger)**: `http://localhost:8000/docs`
-- **Perfil 360º com Mascaramento RBAC**: `GET /api/v1/customers/M0000001/360?role=ANALISTA` vs `?role=DPO`
+- **Perfil 360 com Mascaramento RBAC**: `GET /api/v1/customers/M0000001/360?role=ANALISTA` vs `?role=DPO`
 - **Direito ao Esquecimento (LGPD)**: `POST /api/v1/governance/lgpd/forget`
 
 ---
 
-## 📁 Estrutura do Repositório
+## Estrutura do Repositório
 
 ```text
 novabank-customer360/
-├── .github/workflows/ci.yml                # Pipeline CI (pytest E2E)
+├── ci/github-actions-ci.yml                # Pipeline CI (pytest E2E)
 ├── airflow/dags/
 │   ├── dag_customer360_medallion.py        # DAG diária Bronze -> Silver -> ER -> Gold -> LGPD
 │   └── dag_lgpd_erasure.py                 # DAG de Direito ao Esquecimento (Art. 18 LGPD)
